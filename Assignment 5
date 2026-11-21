@@ -1,1 +1,51 @@
+POSITIVE = {"good", "clean", "fast", "helpful", "improved"}
+NEGATIVE = {"bad", "dirty", "slow", "rude", "smoke", "broken"}
+NEGATORS = {"not", "never", "no"}
 
+
+def score(text):
+    words = text.lower().replace(".", "").replace(",", "").split()
+    total = 0
+    negate = False
+
+    for word in words:
+        if word in NEGATORS:
+            negate = True
+            continue
+
+        if word in POSITIVE:
+            value = 1
+        elif word in NEGATIVE:
+            value = -1
+        else:
+            value = 0
+
+        if negate:
+            value = -value
+            negate = False
+
+        total += value
+
+    return total
+
+
+def label(text):
+    s = score(text)
+
+    return "positive" if s > 0 else "negative" if s < 0 else "neutral"
+
+
+
+reviews = [
+    "Roads are clean and the bus was fast.",
+    "Smoke from the factory, air is bad.",
+    "The staff were helpful.",
+    "The service was not good.",
+    "The road is dirty and broken."
+]
+
+for review in reviews:
+    print("Review:", review)
+    print("Score:", score(review))
+    print("Sentiment:", label(review))
+    print()
