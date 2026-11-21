@@ -1,1 +1,170 @@
 
+import os
+import csv
+import re
+from collections import defaultdict
+
+INPUT_FILES = [
+    "department1.txt",
+    "department2.txt",
+    "department3.txt",
+    "department4.txt",
+    "department5.txt"
+]
+
+OUTPUT_DIR = "output"
+
+os.makedirs(OUTPUT_DIR, exist_ok=True)
+
+seen_registers = set()
+master_list = []
+event_participants = defaultdict(list)
+errors = []
+department_count = defaultdict(int)
+
+
+def validate_email(email):
+    return (
+        "@" in email and
+        "." in email.split("@")[-1] and
+        " " not in email
+    )
+
+
+def process_files():
+    for filename in INPUT_FILES:
+        try:
+            with open(filename, "r") as file:
+                for line_no, line in enumerate(file, 1):
+                    try:
+                        data = line.strip().split(",")
+
+                        if len(data) != 5:
+                            raise ValueError("Damaged line")
+
+                        reg, name, dept, email, events = data
+
+                        reg = reg.strip()
+                        name = name.strip()
+                        dept = dept.strip()
+                        email = email.strip()
+                        events = events.strip()
+
+                        if not all([reg, name, dept, email, events]):
+                            raise ValueError("Missing field")
+
+                        if reg in seen_registers:
+                            raise ValueError("Duplicate registration")
+
+                        if not validate_email(email):
+                            raise ValueError("Invalid email")
+
+                        seen_registers.add(reg)
+
+                        record = [reg, name, dept, email, events]
+                        master_list.append(record)
+
+                        department_count[dept] += 1
+
+                        for event in events.split(";"):
+                            event = event.strip()
+
+                            if event:
+                                event_participants[event].append(
+                                    [reg, name, dept, email]
+                                )
+
+                    except Exception as e:
+                        errors.append(
+                            f"{filename}, Line {line_no}: "
+                            f"{e} - {line.strip()}"
+                        )
+
+        except FileNotFoundError:
+            errors.append(f"Missing file: {filename}")
+
+
+def write_outputs():
+
+    # Write master registration list
+    with open(
+        f"{OUTPUT_DIR}/master_list.csv",
+        "w",
+        newline=""
+    ) as file:
+
+        writer = csv.writer(file)
+
+        writer.writerow([
+            "Register No",
+            "Name",
+            "Department",
+            "Email",
+            "Events"
+        ])
+
+        writer.writerows(master_list)
+
+    # Write separate CSV for each event
+    for event, participants in event_participants.items():
+
+        safe_name = re.sub(r'[^A-Za-z0-9_-]', '_', event)
+
+        with open(
+            f"{OUTPUT_DIR}/{safe_name}.csv",
+            "w",
+            newline=""
+        ) as file:
+
+            writer = csv.writer(file)
+
+            writer.writerow([
+                "Register No",
+                "Name",
+                "Department",
+                "Email"
+            ])
+
+            writer.writerows(participants)
+
+    # Write summary report
+    with open(f"{OUTPUT_DIR}/summary.txt", "w") as file:
+
+        file.write("COLLEGE FEST SUMMARY REPORT\n")
+        file.write("---------------------------\n")
+
+        file.write(
+            f"Total valid registrations: {len(master_list)}\n"
+        )
+
+        for dept, count in department_count.items():
+            file.write(f"{dept}: {count}\n")
+
+        file.write("\nEvent-wise participants:\n")
+
+        for event, participants in event_participants.items():
+            file.write(f"{event}: {len(participants)}\n")
+
+        file.write(f"\nTotal errors: {len(errors)}\n")
+
+    # Write error log
+    with open(f"{OUTPUT_DIR}/error_log.txt", "w") as file:
+
+        for error in errors:
+            file.write(error + "\n")
+
+
+def main():
+
+    process_files()
+    write_outputs()
+
+    print("College Fest Processing Completed!")
+    print("Valid registrations:", len(master_list))
+    print("Errors found:", len(errors))
+    print("Output files saved in:", OUTPUT_DIR)
+
+
+if __name__ == "__main__":
+    main()
+
