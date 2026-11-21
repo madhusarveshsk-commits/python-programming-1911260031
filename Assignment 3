@@ -1,1 +1,81 @@
+import re
+import time
 
+def normalize_phone(phone):
+    return re.sub(r'\D', '', phone)[-10:]
+
+def normalize_name(name):
+    return name.lower().replace("dr.", "").strip()
+
+def merge_contacts(contacts):
+    merged = {}
+    phone_map = {}
+
+    for contact in contacts:
+        name = normalize_name(contact["name"])
+        phones = set(normalize_phone(p) for p in contact["phones"])
+        emails = set(e.lower() for e in contact["emails"])
+
+        existing_keys = {
+            phone_map[p] for p in phones if p in phone_map
+        }
+
+        if existing_keys:
+            key = existing_keys.pop()
+            merged[key]["phones"].update(phones)
+            merged[key]["emails"].update(emails)
+
+            for other in existing_keys:
+                merged[key]["phones"].update(
+                    merged[other]["phones"])
+                merged[key]["emails"].update(
+                    merged[other]["emails"])
+
+                del merged[other]
+
+        else:
+            key = next(iter(phones), name)
+            merged[key] = {
+                "name": contact["name"],
+                "phones": set(),
+                "emails": set()
+            }
+            merged[key]["phones"].update(phones)
+            merged[key]["emails"].update(emails)
+
+        for p in merged[key]["phones"]:
+            phone_map[p] = key
+
+    return list(merged.values())
+
+
+contacts = [
+    {
+        "name": "Dr. Ravi",
+        "phones": ["+91 98400 12345"],
+        "emails": ["ravi@gmail.com"]
+    },
+    {
+        "name": "Ravi Kumar",
+        "phones": ["9840012345", "9876543210"],
+        "emails": ["ravi@yahoo.com"]
+    },
+    {
+        "name": "Arun",
+        "phones": ["9123456780"],
+        "emails": ["arun@gmail.com"]
+    }
+]
+
+start = time.time()
+result = merge_contacts(contacts)
+end = time.time()
+
+print("Merged Contacts:")
+for contact in result:
+    print("Name:", contact["name"])
+    print("Phone Numbers:", contact["phones"])
+    print("Emails:", contact["emails"])
+    print()
+
+print("Execution Time:", end - start, "seconds")
