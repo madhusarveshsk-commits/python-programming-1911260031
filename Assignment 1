@@ -1,1 +1,42 @@
+BASE_RATE = 32.00
+FAT_STEP_RATE = 0.45
+BONUS_RATE = 0.50
+BONUS_LIMIT = 500
+REFERENCE_FAT = 3.50
 
+def calculate_milk_price(fat, snf, litres, month):
+    fat = round(fat, 2)
+    snf = round(snf, 2)
+
+    if month < 4 or month > 6:
+        return "Seasonal rate is not applicable."
+
+    fat_steps = int((fat - REFERENCE_FAT) / 0.1)
+
+    if fat_steps < 0:
+        fat_steps = 0
+
+    rate = BASE_RATE + (fat_steps * FAT_STEP_RATE)
+
+    bonus = BONUS_RATE if litres > BONUS_LIMIT else 0
+
+    final_rate = rate + bonus
+    total_amount = litres * final_rate
+
+    print("\n----- MILK BILL -----")
+    print("Fat:", format(fat, ".2f"))
+    print("SNF:", format(snf, ".2f"))
+    print("Base Rate: Rs.", BASE_RATE)
+    print("Fat Rate: Rs.", fat_steps * FAT_STEP_RATE)
+    print("Bonus: Rs.", bonus)
+    print("Final Rate: Rs.", round(final_rate, 2))
+    print("Total Amount: Rs.", round(total_amount, 2))
+
+
+
+fat = float(input("Enter Fat Value: "))
+snf = float(input("Enter SNF Value: "))
+litres = float(input("Enter Total Milk Litres (10 days): "))
+month = int(input("Enter Month (1-12): "))
+
+calculate_milk_price(fat, snf, litres, month)
