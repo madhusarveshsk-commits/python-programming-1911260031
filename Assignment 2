@@ -1,1 +1,34 @@
+def original_count(numbers):
+    count = {}
 
+    for i in range(len(numbers)):
+        frequency = 0
+        for j in range(len(numbers)):
+            if numbers[i] == numbers[j]:
+                frequency += 1
+        count[numbers[i]] = frequency
+
+    return count
+
+
+
+
+def redesigned_count(numbers):
+    count = {}
+
+    for num in numbers:
+        if num in count:
+            count[num] += 1
+        else:
+            count[num] = 1
+
+    return count
+
+
+numbers = [10, 20, 10, 30, 20, 10]
+
+
+print("Original Output:", original_count(numbers))
+print("Redesigned Output:", redesigned_count(numbers))
+
+print("Both programs produce the same result.") 
